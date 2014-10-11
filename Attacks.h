@@ -1,0 +1,6 @@
+#ifndef ATTACKS_H_INCLUDED
+#define ATTACKS_H_INCLUDED
+
+
+
+#endif // ATTACKS_H_INCLUDED
