@@ -33,7 +33,11 @@ int main()
     FENparser LoadFENtoBoard(PERFT_1,board);
 
     Move *mov = new Move;
-    Set_Move_Info(mov,e2,e4,EMPTY,EMPTY,0,0,OPEN_GAME,0,false,true);
+
+    for(unsigned i=0;i<3;++i)
+    {
+
+    Set_Move_Info(mov,b1,c3,EMPTY,EMPTY,0,0,OPEN_GAME,0,false,false);
     Make_Move(board,mov);
     board->Display_Board();
 
@@ -41,7 +45,7 @@ int main()
     Make_Move(board,mov);
     board->Display_Board();
 
-    Set_Move_Info(mov,b1,c3,EMPTY,EMPTY,0,0,OPEN_GAME,0,false,false);
+    Set_Move_Info(mov,c3,b1,EMPTY,EMPTY,0,0,OPEN_GAME,0,false,false);
     Make_Move(board,mov);
     board->Display_Board();
 
@@ -49,9 +53,7 @@ int main()
     Make_Move(board,mov);
     board->Display_Board();
 
-    Set_Move_Info(mov,c3,b1,EMPTY,EMPTY,0,0,OPEN_GAME,0,false,false);
-    Make_Move(board,mov);
-    board->Display_Board();
+    }
 
     delete mov;
     /*Possible_Moves *moves = new Possible_Moves;

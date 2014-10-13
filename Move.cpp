@@ -1,25 +1,24 @@
 #include "Move.h"
 #include "HashKey.h"
 
-/**************************************************************/
-/* Captures , Pawn moves , and Castling  can't be repeated    */
-/* so whenever there is one we should reset the fifty move    */
-/* count and the repetition count.                            */
-/**************************************************************/
+/****************************************************************/
+/* Captures , Pawn moves , and Castling  can't be repeated      */
+/* so whenever there is one we should reset the fifty move      */
+/* count and point the IrreversiblePly index to this move .     */
+/****************************************************************/
 
 void Make_Move(Board *board,Move *mov)
 {
+     if(board->Get_Fify_Move_Count() == 50)
+        std::cout << "Draw by Fifty move rule.\n\n";
     /* Temporary Variables , for clearance and readability  */
 
     squares FROM,TO,Enpassent;
     pieces pc,Captured_pc,Promoted_pc;
     side Side_To_Move;
     castling Castling_Permissions;
-    unsigned Full_Moves_Count,Fifty_Moves_Count,Repetition_Count;
     phase Game_Phase;
-    U64 HashKey = board->Get_HashKey();
     char* Board_FEN;
-    const Move* Last_Move;
 
     /* Extracting Move Info */
 
@@ -30,11 +29,11 @@ void Make_Move(Board *board,Move *mov)
     Captured_pc = pieces(GET_CAPTURED_PIECE(mov->Info));
     Promoted_pc = pieces(GET_PROMOTED_PIECE(mov->Info));
     Castling_Permissions = castling(GET_CASTLING_PERMISSIONS(mov->Info));
-    Repetition_Count= GET_REPETITION_FROM_MOVE(mov->Info);
     Game_Phase = phase(GET_GAME_PHASE(mov->Info));
 
-    /* Extracting Last Move */
-    Last_Move = board->Get_Last_Move();
+    /* Extracting Board Info */
+    unsigned History_Size = board->Get_History_Size();
+    U64 HashKey = board->Get_HashKey();
 
     /* Making the move */
     board->Set_Piece_onSquare(pc,TO);
@@ -46,10 +45,9 @@ void Make_Move(Board *board,Move *mov)
     if(Captured_pc != EMPTY)
     {
         HashKey = Remove_Key_From_HashKey(PieceKeys[Captured_pc][TO],HashKey);
-        board->Set_IrreversiblePly_Index(board->Get_History_Size());
+        board->Set_IrreversiblePly_Index(History_Size);
 
         board->Reset_Fify_Move_Count();
-        board->Reset_Reptition_Count();
     }
     HashKey = Add_Key_To_HashKey(PieceKeys[pc][TO],HashKey);
 
@@ -70,40 +68,41 @@ void Make_Move(Board *board,Move *mov)
         board->Inc_Full_Moves_Count();
     }
 
-
-    if(IS_PAWN_START(mov->Info))
+    /* Pawn moves */
+    if(pc == wP || pc == bP)
     {
-        Enpassent = GET_ENPASSENT_SQUARE(Side_To_Move,TO);
-        board->Set_IrreversiblePly_Index(board->Get_History_Size());
-        board->Set_Enpassent(Enpassent);
-        board->Set_Game_Phase(OPEN_GAME);
-
+        board->Set_IrreversiblePly_Index(History_Size);
         board->Reset_Fify_Move_Count();
-        board->Reset_Reptition_Count();
 
-        //Hashing
-        HashKey = Add_Key_To_HashKey(EnpassentFileKeys[GET_FILE_FROM_SQUARE(Enpassent)],HashKey);
+        if(IS_PAWN_START(mov->Info))
+        {
+             Enpassent = GET_ENPASSENT_SQUARE(Side_To_Move,TO);
+             board->Set_Enpassent(Enpassent);
+             board->Set_Game_Phase(OPEN_GAME);
+
+            //Hashing
+            HashKey = Add_Key_To_HashKey(EnpassentFileKeys[GET_FILE_FROM_SQUARE(Enpassent)],HashKey);
+        }
+
+        else if(Promoted_pc != EMPTY)
+        {
+            board->Set_Piece_onSquare(Promoted_pc,TO);
+            board->Set_Game_Phase(END_GAME);
+
+            //Hashing
+            HashKey = Remove_Key_From_HashKey(PieceKeys[Captured_pc][TO],HashKey);
+            HashKey = Add_Key_To_HashKey(PieceKeys[Promoted_pc][TO],HashKey);
+        }
+
     }
 
-    else if(Promoted_pc != EMPTY)
-    {
-        board->Set_Piece_onSquare(Promoted_pc,TO);
-        board->Set_IrreversiblePly_Index(board->Get_History_Size());
-        board->Set_Game_Phase(END_GAME);
-
-        board->Reset_Fify_Move_Count();
-        board->Reset_Reptition_Count();
-
-        //Hashing
-        HashKey = Remove_Key_From_HashKey(PieceKeys[Captured_pc][TO],HashKey);
-        HashKey = Add_Key_To_HashKey(PieceKeys[Promoted_pc][TO],HashKey);
-    }
 
     /* Castling */
 
     else if(Castling_Permissions != 0)
     {
-        board->Set_IrreversiblePly_Index(board->Get_History_Size());
+        board->Set_IrreversiblePly_Index(History_Size);
+
         if(Castling_Permissions == CastleWhiteKside || Castling_Permissions == CastleWhiteQside)
             Castling_Permissions = castling(CastleWhiteKside + CastleWhiteQside);
         else
@@ -114,7 +113,6 @@ void Make_Move(Board *board,Move *mov)
         board->Set_Game_Phase(MID_GAME);
 
         board->Reset_Fify_Move_Count();
-        board->Reset_Reptition_Count();
 
         //Hashing
         HashKey = Remove_Key_From_HashKey(CastlingKeys[Castling_Permissions],HashKey);
@@ -188,20 +186,12 @@ void Make_Move(Board *board,Move *mov)
         HashKey = Remove_Key_From_HashKey(CastlingKeys[CastleBlackQside+CastleBlackKside],HashKey);
     }
 
+    if(History_Size != board->Get_IrreversiblePly_Index() && History_Size > 3)
+        if(board->Is_3Repetition_Draw(HashKey))
+            std::cout << "Draw by 3-Fold Repetition after " << Squares_Name[FROM] << "-" << Squares_Name[TO] << ".\n\n";
+
     board->Set_HashKey(HashKey);
-
-    if(Last_Move != new Move())
-    {
-        if(Last_Move->HashKey == HashKey){ std::cout << "HI \n\n";
-            board->Inc_Repetition_Count();}
-    }
-    else
-        delete Last_Move;
-
     mov->HashKey = HashKey;
     board->Add_Move_To_History(mov);
-
-
-
 }
 

@@ -323,13 +323,19 @@ struct Move
             return false;
     }
 
-   /* bool operator==(Move mov)
+    /*bool operator==(Move mov)
     {
         if(HashKey == mov.HashKey && Info == mov.Info)
             return true;
         else
             return false;
     }*/
+    void operator=(Move mov)
+    {
+        Info = mov.Info;
+        Score = mov.Score;
+        HashKey = mov.HashKey;
+    }
 
 };
 

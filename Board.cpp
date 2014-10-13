@@ -11,6 +11,14 @@ Board :: Board()
     Display_Board();
 }
 
+Board :: ~Board()
+{
+    for(unsigned i=0;i<History.size();++i)
+    {
+        delete History[i];
+    }
+}
+
 bool Board::Init_Board()
 {
     Board::Init_Board_Pieces();
@@ -33,7 +41,7 @@ bool Board::Init_Board_Flags()
 {
     Side_To_Move = ANY;
     Enpassent = OFF_BOARD;
-    Full_Moves_Count = Fify_Move_Count = Repetition_Count = HashKey = 0;
+    Full_Moves_Count = Fify_Move_Count = HashKey = Last_Irreversible_ply_index = 0;
     Castling_Permissions = UNKNOWN;
     Game_Phase = NONE;
     History.reserve(AVERAGE_GAME_MOVES);
@@ -115,9 +123,8 @@ void Board::Display_Board()
     if(Castling_Permissions & UNKNOWN)
         std::cout << "-";
 
-    std::cout << "\nEnpassent square : " << Squares_Name[Enpassent];
+    std::cout << "\nEnpassent square : " << Squares_Name[Enpassent] << "\n";
 
-    std::cout << "\nRepetition count = " << Repetition_Count << "\n";
     std::cout << std::hex << "Board hash key = " << HashKey << std::dec << "\n";
     std::cout << "\nFEN : ";
 
@@ -493,6 +500,22 @@ unsigned Board::Get_IrreversiblePly_Index()
     return Last_Irreversible_ply_index;
 }
 
+bool Board::Is_3Repetition_Draw(U64 Position_Key)
+{
+    unsigned Rep_Count=0;
+    unsigned Histroy_Size = History.size()-2;
+
+    for(int i = Histroy_Size;i >= int(Last_Irreversible_ply_index); i-=2) //Without casting "unsigned" to "int" , OUT_OF_RANGE error will occur.
+    {
+        if(History[i]->HashKey == Position_Key)
+            ++Rep_Count;
+
+        if(Rep_Count == 2)
+            return true;
+    }
+    return false;
+}
+
 void Board::Set_HashKey(U64 key)
 {
     HashKey = key;
@@ -503,30 +526,17 @@ U64 Board::Get_HashKey() const
     return HashKey;
 }
 
-void Board::Inc_Repetition_Count()
-{
-    Repetition_Count++;
-}
-
-void Board::Reset_Reptition_Count()
-{
-    Repetition_Count = 0;
-}
-
-unsigned Board::Get_Repetition_Count() const
-{
-    return Repetition_Count;
-}
-
 void Board::Add_Move_To_History(const Move *mv)
 {
-    History.push_back(mv);
+     Move *mov = new Move;
+    (*mov) = (*mv);
+    History.push_back(mov);
 }
 
 const Move* Board::Get_Last_Move() const
 {
-    if(History.size() > 1)
-        return History[(History.size())-2];
+    if(!History.empty())
+        return History[(History.size())-1];
     else
         return new Move;
 }

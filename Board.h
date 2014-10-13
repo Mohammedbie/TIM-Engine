@@ -8,6 +8,7 @@ class Board
 {
 public:
      Board();
+     ~Board();
 
 
      /* Board Methods */
@@ -44,13 +45,10 @@ public:
 
      void Set_IrreversiblePly_Index(unsigned);
      unsigned Get_IrreversiblePly_Index();
+     bool Is_3Repetition_Draw(U64 Position_Key);
 
      void Set_HashKey(U64);
      U64 Get_HashKey() const;
-
-     void Inc_Repetition_Count();
-     void Reset_Reptition_Count();
-     unsigned Get_Repetition_Count() const;
 
      void Set_Board_FEN(char* ,unsigned Length);
      char* Get_Board_FEN() const;
@@ -122,7 +120,6 @@ private:
     phase Game_Phase;
     U64 HashKey;
     unsigned Last_Irreversible_ply_index;
-    unsigned Repetition_Count;
 
     std::vector<const Move*> History;
 
