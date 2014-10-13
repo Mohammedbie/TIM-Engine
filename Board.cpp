@@ -374,6 +374,22 @@ squares Board::Get_Enpassent() const
     return Enpassent;
 }
 
+void Board::Set_KingSq(side s,squares sq)
+{
+    if(s == WHITE && sq != OFF_BOARD)
+        KingSquare[0] == sq;
+    else if(s == BLACK && sq != OFF_BOARD)
+        KingSquare[1] == sq;
+}
+
+squares Board::Get_KingSq(pieces pc) const
+{
+    if(pc == wK)
+        return KingSquare[0];
+    else if(pc == bK)
+        return KingSquare[1];
+}
+
 bool Board::Set_Full_Moves_Count(unsigned cnt)
 {
     if(cnt < INVAILD)
@@ -467,6 +483,16 @@ phase Board::Get_Game_Phase() const
         return Game_Phase;
 }
 
+void Board::Set_IrreversiblePly_Index(unsigned index)
+{
+    Last_Irreversible_ply_index = index;
+}
+
+unsigned Board::Get_IrreversiblePly_Index()
+{
+    return Last_Irreversible_ply_index;
+}
+
 void Board::Set_HashKey(U64 key)
 {
     HashKey = key;
@@ -492,15 +518,22 @@ unsigned Board::Get_Repetition_Count() const
     return Repetition_Count;
 }
 
-void Board::Add_Move_To_History(Move mv)
+void Board::Add_Move_To_History(const Move *mv)
 {
     History.push_back(mv);
 }
 
-Move Board::Get_Last_Move() const
+const Move* Board::Get_Last_Move() const
 {
-    if(!History.empty())
-        return History.front();
+    if(History.size() > 1)
+        return History[(History.size())-2];
+    else
+        return new Move;
+}
+
+unsigned Board::Get_History_Size()
+{
+    return History.size();
 }
 
 void Board::Pop_Last_Move()
@@ -645,15 +678,15 @@ void Board::Get_Possible_Moves_By_Piece_Type(Possible_Moves* Moves,pieces pc) co
                          //Promotion Moves
                          if(GET_RANK_FROM_SQUARE(sq) == Rank_7)
                          {
-                             Set_Move_Info((Moves->moves)+(Moves->Count++),sq,TO_sqs[i],wN,Piece_Type_By_Square[TO_sqs[i]],(Castling_Permissions == UNKNOWN?0:Castling_Permissions),0,Game_Phase,false,Side_To_Move);
-                             Set_Move_Info((Moves->moves)+(Moves->Count++),sq,TO_sqs[i],wB,Piece_Type_By_Square[TO_sqs[i]],(Castling_Permissions == UNKNOWN?0:Castling_Permissions),0,Game_Phase,false,Side_To_Move);
-                             Set_Move_Info((Moves->moves)+(Moves->Count++),sq,TO_sqs[i],wR,Piece_Type_By_Square[TO_sqs[i]],(Castling_Permissions == UNKNOWN?0:Castling_Permissions),0,Game_Phase,false,Side_To_Move);
-                             Set_Move_Info((Moves->moves)+(Moves->Count),sq,TO_sqs[i],wQ,Piece_Type_By_Square[TO_sqs[i]],(Castling_Permissions == UNKNOWN?0:Castling_Permissions),0,Game_Phase,false,Side_To_Move);
+                             Set_Move_Info((Moves->moves)+(Moves->Count++),sq,TO_sqs[i],wN,Piece_Type_By_Square[TO_sqs[i]],0,0,Game_Phase,false,Side_To_Move,false);
+                             Set_Move_Info((Moves->moves)+(Moves->Count++),sq,TO_sqs[i],wB,Piece_Type_By_Square[TO_sqs[i]],0,0,Game_Phase,false,Side_To_Move,false);
+                             Set_Move_Info((Moves->moves)+(Moves->Count++),sq,TO_sqs[i],wR,Piece_Type_By_Square[TO_sqs[i]],0,0,Game_Phase,false,Side_To_Move,false);
+                             Set_Move_Info((Moves->moves)+(Moves->Count),sq,TO_sqs[i],wQ,Piece_Type_By_Square[TO_sqs[i]],0,0,Game_Phase,false,Side_To_Move,false);
 
                          }
 
                          else
-                         Set_Move_Info((Moves->moves)+(Moves->Count),sq,TO_sqs[i],EMPTY,Piece_Type_By_Square[TO_sqs[i]],(Castling_Permissions == UNKNOWN?0:Castling_Permissions),0,Game_Phase,false,Side_To_Move);
+                         Set_Move_Info((Moves->moves)+(Moves->Count),sq,TO_sqs[i],EMPTY,Piece_Type_By_Square[TO_sqs[i]],0,0,Game_Phase,false,Side_To_Move,false);
 
                          Moves->Count++;
 
@@ -664,7 +697,7 @@ void Board::Get_Possible_Moves_By_Piece_Type(Possible_Moves* Moves,pieces pc) co
                  And_Result = (U64(1)<<Enpassent) & White_Pawn_Direct_Attacks[sq];
                  if(GET_RANK_FROM_SQUARE(sq) == Rank_5 && And_Result!= 0)
                  {
-                     Set_Move_Info((Moves->moves)+(Moves->Count),sq,Enpassent,EMPTY,bP,(Castling_Permissions == UNKNOWN?0:Castling_Permissions),0,Game_Phase,true,Side_To_Move);
+                     Set_Move_Info((Moves->moves)+(Moves->Count),sq,Enpassent,EMPTY,bP,0,0,Game_Phase,true,Side_To_Move,false);
                      Moves->Count++;
                  }
 
@@ -672,14 +705,14 @@ void Board::Get_Possible_Moves_By_Piece_Type(Possible_Moves* Moves,pieces pc) co
                  if(Piece_Type_By_Square[sq+8] == EMPTY)
                  {
                      //Pawn Start
-                     if(GET_RANK_FROM_SQUARE(sq) == Rank_2 && Full_Moves_Count == 1  && Piece_Type_By_Square[sq+16] == EMPTY )
+                     if(GET_RANK_FROM_SQUARE(sq) == Rank_2  && Piece_Type_By_Square[sq+16] == EMPTY )
                      {
-                         Set_Move_Info((Moves->moves)+(Moves->Count),sq,sq+16,EMPTY,EMPTY,(Castling_Permissions == UNKNOWN?0:Castling_Permissions),0,Game_Phase,false,Side_To_Move);
+                         Set_Move_Info((Moves->moves)+(Moves->Count),sq,sq+16,EMPTY,EMPTY,0,0,Game_Phase,false,Side_To_Move,true);
                          Moves->Count++;
                      }
 
 
-                         Set_Move_Info((Moves->moves)+(Moves->Count),sq,sq+8,EMPTY,EMPTY,(Castling_Permissions == UNKNOWN?0:Castling_Permissions),0,Game_Phase,false,Side_To_Move);
+                         Set_Move_Info((Moves->moves)+(Moves->Count),sq,sq+8,EMPTY,EMPTY,0,0,Game_Phase,false,Side_To_Move,false);
                          Moves->Count++;
                  }
 
@@ -710,15 +743,15 @@ void Board::Get_Possible_Moves_By_Piece_Type(Possible_Moves* Moves,pieces pc) co
                          if(GET_RANK_FROM_SQUARE(sq) == Rank_2)
                          {
                              //Promotion Moves
-                             Set_Move_Info((Moves->moves)+(Moves->Count++),sq,TO_sqs[i],bN,Piece_Type_By_Square[TO_sqs[i]],(Castling_Permissions == UNKNOWN?0:Castling_Permissions),0,Game_Phase,false,Side_To_Move);
-                             Set_Move_Info((Moves->moves)+(Moves->Count++),sq,TO_sqs[i],bB,Piece_Type_By_Square[TO_sqs[i]],(Castling_Permissions == UNKNOWN?0:Castling_Permissions),0,Game_Phase,false,Side_To_Move);
-                             Set_Move_Info((Moves->moves)+(Moves->Count++),sq,TO_sqs[i],bR,Piece_Type_By_Square[TO_sqs[i]],(Castling_Permissions == UNKNOWN?0:Castling_Permissions),0,Game_Phase,false,Side_To_Move);
-                             Set_Move_Info((Moves->moves)+(Moves->Count),sq,TO_sqs[i],bQ,Piece_Type_By_Square[TO_sqs[i]],(Castling_Permissions == UNKNOWN?0:Castling_Permissions),0,Game_Phase,false,Side_To_Move);
+                             Set_Move_Info((Moves->moves)+(Moves->Count++),sq,TO_sqs[i],bN,Piece_Type_By_Square[TO_sqs[i]],0,0,Game_Phase,false,Side_To_Move,false);
+                             Set_Move_Info((Moves->moves)+(Moves->Count++),sq,TO_sqs[i],bB,Piece_Type_By_Square[TO_sqs[i]],0,0,Game_Phase,false,Side_To_Move,false);
+                             Set_Move_Info((Moves->moves)+(Moves->Count++),sq,TO_sqs[i],bR,Piece_Type_By_Square[TO_sqs[i]],0,0,Game_Phase,false,Side_To_Move,false);
+                             Set_Move_Info((Moves->moves)+(Moves->Count),sq,TO_sqs[i],bQ,Piece_Type_By_Square[TO_sqs[i]],0,0,Game_Phase,false,Side_To_Move,false);
 
                          }
 
                          else
-                         Set_Move_Info((Moves->moves)+(Moves->Count),sq,TO_sqs[i],EMPTY,Piece_Type_By_Square[TO_sqs[i]],(Castling_Permissions == UNKNOWN?0:Castling_Permissions),0,Game_Phase,false,Side_To_Move);
+                         Set_Move_Info((Moves->moves)+(Moves->Count),sq,TO_sqs[i],EMPTY,Piece_Type_By_Square[TO_sqs[i]],0,0,Game_Phase,false,Side_To_Move,false);
 
                          Moves->Count++;
 
@@ -729,7 +762,7 @@ void Board::Get_Possible_Moves_By_Piece_Type(Possible_Moves* Moves,pieces pc) co
                  And_Result = (U64(1)<<Enpassent) & Black_Pawn_Direct_Attacks[sq];
                  if(GET_RANK_FROM_SQUARE(sq) == Rank_4 && And_Result!= 0)
                  {
-                     Set_Move_Info((Moves->moves)+(Moves->Count),sq,Enpassent,EMPTY,wP,(Castling_Permissions == UNKNOWN?0:Castling_Permissions),0,Game_Phase,true,Side_To_Move);
+                     Set_Move_Info((Moves->moves)+(Moves->Count),sq,Enpassent,EMPTY,wP,0,0,Game_Phase,true,Side_To_Move,false);
                      Moves->Count++;
                  }
 
@@ -737,14 +770,14 @@ void Board::Get_Possible_Moves_By_Piece_Type(Possible_Moves* Moves,pieces pc) co
                  if(Piece_Type_By_Square[sq-8] == EMPTY)
                  {
                      //Pawn Start
-                     if(GET_RANK_FROM_SQUARE(sq) == Rank_7 && Full_Moves_Count == 1  && Piece_Type_By_Square[sq-16] == EMPTY )
+                     if(GET_RANK_FROM_SQUARE(sq) == Rank_7  && Piece_Type_By_Square[sq-16] == EMPTY )
                      {
-                         Set_Move_Info((Moves->moves)+(Moves->Count),sq,sq-16,EMPTY,EMPTY,(Castling_Permissions == UNKNOWN?0:Castling_Permissions),0,Game_Phase,false,Side_To_Move);
+                         Set_Move_Info((Moves->moves)+(Moves->Count),sq,sq-16,EMPTY,EMPTY,0,0,Game_Phase,false,Side_To_Move,true);
                          Moves->Count++;
                      }
 
 
-                         Set_Move_Info((Moves->moves)+(Moves->Count),sq,sq-8,EMPTY,EMPTY,(Castling_Permissions == UNKNOWN?0:Castling_Permissions),0,Game_Phase,false,Side_To_Move);
+                         Set_Move_Info((Moves->moves)+(Moves->Count),sq,sq-8,EMPTY,EMPTY,0,0,Game_Phase,false,Side_To_Move,false);
                          Moves->Count++;
                  }
 
@@ -773,7 +806,7 @@ void Board::Get_Possible_Moves_By_Piece_Type(Possible_Moves* Moves,pieces pc) co
 
                     for(unsigned i=0;i<TO_sqs.size();++i)
                     {
-                        Set_Move_Info((Moves->moves)+(Moves->Count),sq,TO_sqs[i],EMPTY,Piece_Type_By_Square[TO_sqs[i]],(Castling_Permissions == UNKNOWN?0:Castling_Permissions),0,Game_Phase,false,Side_To_Move);
+                        Set_Move_Info((Moves->moves)+(Moves->Count),sq,TO_sqs[i],EMPTY,Piece_Type_By_Square[TO_sqs[i]],0,0,Game_Phase,false,Side_To_Move,false);
                         Moves->Count++;
                     }
 
@@ -808,7 +841,7 @@ void Board::Get_Possible_Moves_By_Piece_Type(Possible_Moves* Moves,pieces pc) co
 
                     for(unsigned i=0;i<TO_sqs.size();++i)
                     {
-                        Set_Move_Info((Moves->moves)+(Moves->Count),sq,TO_sqs[i],EMPTY,Piece_Type_By_Square[TO_sqs[i]],(Castling_Permissions == UNKNOWN?0:Castling_Permissions),0,Game_Phase,false,Side_To_Move);
+                        Set_Move_Info((Moves->moves)+(Moves->Count),sq,TO_sqs[i],EMPTY,Piece_Type_By_Square[TO_sqs[i]],0,0,Game_Phase,false,Side_To_Move,false);
                         Moves->Count++;
                     }
 
@@ -841,7 +874,7 @@ void Board::Get_Possible_Moves_By_Piece_Type(Possible_Moves* Moves,pieces pc) co
 
                     for(unsigned i=0;i<TO_sqs.size();++i)
                     {
-                        Set_Move_Info((Moves->moves)+(Moves->Count),sq,TO_sqs[i],EMPTY,Piece_Type_By_Square[TO_sqs[i]],(Castling_Permissions == UNKNOWN?0:Castling_Permissions),0,Game_Phase,false,Side_To_Move);
+                        Set_Move_Info((Moves->moves)+(Moves->Count),sq,TO_sqs[i],EMPTY,Piece_Type_By_Square[TO_sqs[i]],0,0,Game_Phase,false,Side_To_Move,false);
                         Moves->Count++;
                     }
 
@@ -874,7 +907,7 @@ void Board::Get_Possible_Moves_By_Piece_Type(Possible_Moves* Moves,pieces pc) co
 
                     for(unsigned i=0;i<TO_sqs.size();++i)
                     {
-                        Set_Move_Info((Moves->moves)+(Moves->Count),sq,TO_sqs[i],EMPTY,Piece_Type_By_Square[TO_sqs[i]],(Castling_Permissions == UNKNOWN?0:Castling_Permissions),0,Game_Phase,false,Side_To_Move);
+                        Set_Move_Info((Moves->moves)+(Moves->Count),sq,TO_sqs[i],EMPTY,Piece_Type_By_Square[TO_sqs[i]],0,0,Game_Phase,false,Side_To_Move,false);
                         Moves->Count++;
                     }
 
@@ -892,9 +925,9 @@ void Board::Get_Possible_Moves_By_Piece_Type(Possible_Moves* Moves,pieces pc) co
                 if(Get_Piece_onSquare(f1) == EMPTY && Get_Piece_onSquare(g1) == EMPTY)
                      if(!Is_Square_Attacked(f1,BLACK) && !Is_Square_Attacked(g1,BLACK))
                      {
-                         Set_Move_Info((Moves->moves)+(Moves->Count),e1,g1,EMPTY,EMPTY,0,0,MID_GAME,0,Side_To_Move);
+                         Set_Move_Info((Moves->moves)+(Moves->Count),e1,g1,EMPTY,EMPTY,CastleWhiteKside,0,MID_GAME,0,Side_To_Move,false);
                          Moves->Count++;
-                         Set_Move_Info((Moves->moves)+(Moves->Count),h1,f1,EMPTY,EMPTY,0,0,MID_GAME,0,Side_To_Move);
+                         Set_Move_Info((Moves->moves)+(Moves->Count),h1,f1,EMPTY,EMPTY,0,0,MID_GAME,0,Side_To_Move,false);
                          Moves->Count++;
                      }
 
@@ -902,9 +935,9 @@ void Board::Get_Possible_Moves_By_Piece_Type(Possible_Moves* Moves,pieces pc) co
                 if(Get_Piece_onSquare(d1) == EMPTY && Get_Piece_onSquare(c1) == EMPTY && Get_Piece_onSquare(b1) == EMPTY)
                      if(!Is_Square_Attacked(d1,BLACK) && !Is_Square_Attacked(c1,BLACK))
                      {
-                         Set_Move_Info((Moves->moves)+(Moves->Count),e1,c1,EMPTY,EMPTY,0,0,MID_GAME,0,Side_To_Move);
+                         Set_Move_Info((Moves->moves)+(Moves->Count),e1,c1,EMPTY,EMPTY,CastleWhiteQside,0,MID_GAME,0,Side_To_Move,false);
                          Moves->Count++;
-                         Set_Move_Info((Moves->moves)+(Moves->Count),a1,d1,EMPTY,EMPTY,0,0,MID_GAME,0,Side_To_Move);
+                         Set_Move_Info((Moves->moves)+(Moves->Count),a1,d1,EMPTY,EMPTY,0,0,MID_GAME,0,Side_To_Move,false);
                          Moves->Count++;
                      }
         }
@@ -915,9 +948,9 @@ void Board::Get_Possible_Moves_By_Piece_Type(Possible_Moves* Moves,pieces pc) co
                 if(Get_Piece_onSquare(f8) == EMPTY && Get_Piece_onSquare(g8) == EMPTY)
                      if(!Is_Square_Attacked(f8,WHITE) || !Is_Square_Attacked(g8,WHITE))
                      {
-                         Set_Move_Info((Moves->moves)+(Moves->Count),e8,g8,EMPTY,EMPTY,0,0,MID_GAME,0,Side_To_Move);
+                         Set_Move_Info((Moves->moves)+(Moves->Count),e8,g8,EMPTY,EMPTY,CastleBlackKside,0,MID_GAME,0,Side_To_Move,false);
                          Moves->Count++;
-                         Set_Move_Info((Moves->moves)+(Moves->Count),h8,f8,EMPTY,EMPTY,0,0,MID_GAME,0,Side_To_Move);
+                         Set_Move_Info((Moves->moves)+(Moves->Count),h8,f8,EMPTY,EMPTY,0,0,MID_GAME,0,Side_To_Move,false);
                          Moves->Count++;
                      }
 
@@ -925,9 +958,9 @@ void Board::Get_Possible_Moves_By_Piece_Type(Possible_Moves* Moves,pieces pc) co
                 if(Get_Piece_onSquare(d8) == EMPTY && Get_Piece_onSquare(c8) == EMPTY && Get_Piece_onSquare(b8) == EMPTY)
                      if(!Is_Square_Attacked(d8,WHITE) || !Is_Square_Attacked(c8,WHITE))
                      {
-                         Set_Move_Info((Moves->moves)+(Moves->Count),e8,c8,EMPTY,EMPTY,0,0,MID_GAME,0,Side_To_Move);
+                         Set_Move_Info((Moves->moves)+(Moves->Count),e8,c8,EMPTY,EMPTY,CastleBlackQside,0,MID_GAME,0,Side_To_Move,false);
                          Moves->Count++;
-                         Set_Move_Info((Moves->moves)+(Moves->Count),a8,d8,EMPTY,EMPTY,0,0,MID_GAME,0,Side_To_Move);
+                         Set_Move_Info((Moves->moves)+(Moves->Count),a8,d8,EMPTY,EMPTY,0,0,MID_GAME,0,Side_To_Move,false);
                          Moves->Count++;
                      }
         }
@@ -956,7 +989,7 @@ void Board::Get_Possible_Moves_By_Piece_Type(Possible_Moves* Moves,pieces pc) co
                     {
                         if(!Is_Square_Attacked(squares(TO_sqs[i]),pc==wK?BLACK:WHITE))
                         {
-                            Set_Move_Info((Moves->moves)+(Moves->Count),sq,TO_sqs[i],EMPTY,Piece_Type_By_Square[TO_sqs[i]],(Castling_Permissions == UNKNOWN?0:Castling_Permissions),0,Game_Phase,false,Side_To_Move);
+                            Set_Move_Info((Moves->moves)+(Moves->Count),sq,TO_sqs[i],EMPTY,Piece_Type_By_Square[TO_sqs[i]],0,0,Game_Phase,false,Side_To_Move,false);
                             Moves->Count++;
                         }
                     }

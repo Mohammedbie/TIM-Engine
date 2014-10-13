@@ -27,6 +27,9 @@ public:
      void Set_Enpassent(squares);
      squares Get_Enpassent() const;
 
+     void Set_KingSq(side,squares);
+     squares Get_KingSq(pieces) const;
+
      bool Set_Full_Moves_Count(unsigned);
      void Inc_Full_Moves_Count();
      unsigned Get_Full_Moves_Count() const;
@@ -38,6 +41,9 @@ public:
      void Inc_Fifty_Move_Count();
      unsigned Get_Fify_Move_Count() const;
      void Reset_Fify_Move_Count();
+
+     void Set_IrreversiblePly_Index(unsigned);
+     unsigned Get_IrreversiblePly_Index();
 
      void Set_HashKey(U64);
      U64 Get_HashKey() const;
@@ -52,8 +58,9 @@ public:
      bool Set_Game_Phase(phase);
      phase Get_Game_Phase() const;
 
-     void Add_Move_To_History(Move);
-     Move Get_Last_Move() const;
+     void Add_Move_To_History(const Move*);
+     const Move* Get_Last_Move() const;
+     unsigned Get_History_Size();
      void Pop_Last_Move();
 
      bool Is_Square_Attacked(squares,side) const;
@@ -114,9 +121,10 @@ private:
 
     phase Game_Phase;
     U64 HashKey;
+    unsigned Last_Irreversible_ply_index;
     unsigned Repetition_Count;
 
-    std::vector<Move> History;
+    std::vector<const Move*> History;
 
     char* Board_FEN;
 

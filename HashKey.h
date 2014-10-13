@@ -77,6 +77,18 @@ const U64 CastlingKeys[16] = {0x3d803b1089e1f03d , 0xc78233f02feeef6a , 0x767fc0
 
 /* Methods */
 
+inline U64 Add_Key_To_HashKey(U64 Key,U64 HashKey)
+{
+    HashKey ^= Key;
+    return HashKey;
+}
+
+inline U64 Remove_Key_From_HashKey(U64 Key,U64 HashKey)
+{
+    HashKey ^= Key;
+    return HashKey;
+}
+
 void Generate_HashKey(Board *);
 
 

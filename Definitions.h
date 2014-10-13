@@ -47,6 +47,7 @@
 #define GP (Game_Phase)
 #define EP (EnPassent)
 #define IBT (Is_Black_turn)
+#define IPS (Is_Pawn_Start)
 
 #define GET_FILE_FROM_SQUARE(n) ((n) % 8 )
 #define GET_RANK_FROM_SQUARE(n) ((n) / 8 )
@@ -55,12 +56,17 @@
 
 #define SET_SQUARE(n) ((U64(1)) << (n))
 
+#define GET_ENPASSENT_SQUARE(side,square) ( (side) == WHITE ? squares(square-8):squares(square+8) )
+
 
 
 typedef unsigned long long U64;
 
 /* Board */
+static const char* Bools[2] = {"No","Yes"};
+
 enum side {WHITE,BLACK,ANY};
+static const char* Colour[3] = {"White","Black","Any"};
 
 enum files {A_File,B_File,C_File,D_File,E_File,F_File,G_File,H_File};
 enum ranks {Rank_1,Rank_2,Rank_3,Rank_4,Rank_5,Rank_6,Rank_7,Rank_8};
@@ -99,6 +105,8 @@ static const char* Pieces_Name[] = {"WhitePawn","WhiteKnight","WhiteBishop","Whi
 enum castling {CastleWhiteKside = 1 ,CastleWhiteQside = 2 ,CastleBlackKside = 4 ,CastleBlackQside = 8 ,UNKNOWN = 16};
 
 enum phase {OPEN_GAME,MID_GAME,END_GAME,NONE};
+
+
 
 /* Precomputed Attack/Move tables */
 
@@ -284,26 +292,45 @@ const U64 Blockers_Horizontal_SliderRight_Mask[64] = { 0xff , 0xfe , 0xfc , 0xf8
                                                        0xfe0000000000 , 0xfc0000000000 , 0xf80000000000 , 0xf00000000000 , 0xe00000000000 , 0xc00000000000 , 0x800000000000 , 0xff000000000000 ,
                                                        0xfe000000000000 , 0xfc000000000000 , 0xf8000000000000 , 0xf0000000000000 , 0xe0000000000000 , 0xc0000000000000 , 0x80000000000000 , 0xff00000000000000 ,
                                                        0xfe00000000000000 , 0xfc00000000000000 , 0xf800000000000000 , 0xf000000000000000 , 0xe000000000000000 , 0xc000000000000000 , 0x8000000000000000 };
+
 /* Move */
 
 struct Move
 {
     /****************************************************************/
-    /* Info is a 4-Byte unsigned = 32 bit variable.                  */
+    /* Info is a 4-Byte unsigned = 32 bit variable.                 */
     /* The 6 least-significant bits to store : FROM square. (0-63)  */
     /* The next 6 bits to store : TO square. (0-63)                 */
-    /* The next 6 bits to store : Promotion piece,if any. (0-13)    */
+    /* The next 4 bits to store : Promotion piece,if any. (0-13)    */
     /* The next 4 bits to store : Captured Piece,if any. (0-13)     */
     /* The next 4 bits to store : Castling Permissions. (0-15)      */
     /* The next 2 bits to store : Repetition Count. (0-2)           */
     /* The next 2 bits to store : Game Phase. (0-2)                 */
     /* The next 1 bit to store : EnPassent move,if it is. (0-1)     */
     /* The next 1 bit to store : Side to move. (WHITE-BLACK)        */
+    /* The next 1 bit to store : Pawn Start, if it is. (0-1)        */
     /****************************************************************/
 
     unsigned Info;
     int Score;
     U64 HashKey;
+
+    bool operator!=(Move mov)
+    {
+        if(Info != mov.Info)
+            return true;
+        else
+            return false;
+    }
+
+   /* bool operator==(Move mov)
+    {
+        if(HashKey == mov.HashKey && Info == mov.Info)
+            return true;
+        else
+            return false;
+    }*/
+
 };
 
 struct Possible_Moves
@@ -312,10 +339,10 @@ struct Possible_Moves
     unsigned Count;
 };
 
-inline unsigned Set_Move_Info(Move *mov,unsigned FROM,unsigned TO,unsigned Promoted_Piece,unsigned Captured_pc,unsigned Castling_Permisson,unsigned Repitition,unsigned Game_Phase,unsigned EnPassent,unsigned Is_Black_turn)
+inline unsigned Set_Move_Info(Move *mov,unsigned FROM,unsigned TO,unsigned Promoted_Piece,unsigned Captured_pc,unsigned Castling_Permisson,unsigned Repitition,unsigned Game_Phase,unsigned EnPassent,unsigned Is_Black_turn,unsigned Is_Pawn_Start)
 {
     mov->Info = 0;
-    mov->Info |= ((F) | (TO << 6) | (PP << 12) | (CAP << 18) | (CP << 22) | (RP << 26) | (GP << 28) |  (EP << 30) | (IBT << 31));
+    mov->Info |= ((F) | (TO << 6) | (PP << 12) | (CAP << 16) | (CP << 20) | (RP << 24) | (GP << 26) |  (EP << 28) | (IBT << 29) | (IPS << 30));
 }
 
 /* De Bruijn BitScan */
