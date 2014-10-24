@@ -32,8 +32,6 @@
 			<Add option="-Wall" />
 			<Add option="-fexceptions" />
 		</Compiler>
-		<Unit filename="Attacks.cpp" />
-		<Unit filename="Attacks.h" />
 		<Unit filename="Board.cpp" />
 		<Unit filename="Board.h" />
 		<Unit filename="Definitions.h" />
@@ -43,6 +41,12 @@
 		<Unit filename="HashKey.h" />
 		<Unit filename="Move.cpp" />
 		<Unit filename="Move.h" />
+		<Unit filename="PERFT.cpp">
+			<Option target="Debug" />
+		</Unit>
+		<Unit filename="PERFT.h">
+			<Option target="Debug" />
+		</Unit>
 		<Unit filename="main.cpp" />
 		<Extensions>
 			<code_completion />

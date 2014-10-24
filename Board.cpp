@@ -413,6 +413,12 @@ void Board::Inc_Full_Moves_Count()
     Full_Moves_Count++;
 }
 
+void Board::Dec_Full_Move_Count()
+{
+    if(Full_Moves_Count)
+    Full_Moves_Count--;
+}
+
 unsigned Board::Get_Full_Moves_Count() const
 {
    return Full_Moves_Count < INVAILD ?  Full_Moves_Count :  INVAILD;
@@ -450,6 +456,12 @@ bool Board::Set_Fify_Move_Count(unsigned cnt)
 void Board::Inc_Fifty_Move_Count()
 {
     Fify_Move_Count++;
+}
+
+void Board::Dec_Fifty_Move_Count()
+{
+    if(Fify_Move_Count)
+    Fify_Move_Count--;
 }
 
 unsigned Board::Get_Fify_Move_Count() const

@@ -4,6 +4,8 @@
 
 #include "Move.h"
 
+#include "PERFT.h"
+
 #define FEN "rnbqkbnr/pp1ppppp/8/2p5/4P3/5N2/PPPP1PPP/RNBQKB1R b KQkq - 1 2"
 #define FEN1 "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
 #define FEN2 "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq e3 0 1"
@@ -32,30 +34,11 @@ int main()
     Board *board = new Board();
     FENparser LoadFENtoBoard(PERFT_1,board);
 
-    Move *mov = new Move;
 
-    for(unsigned i=0;i<3;++i)
-    {
+    U64 Nodes_Count = Perft(board,2);
 
-    Set_Move_Info(mov,b1,c3,EMPTY,EMPTY,0,0,OPEN_GAME,0,false,false);
-    Make_Move(board,mov);
-    board->Display_Board();
+    cout << "\n\n\n Nodes Count = " << std::dec << Nodes_Count << "\n";
 
-    Set_Move_Info(mov,b8,c6,EMPTY,EMPTY,0,0,OPEN_GAME,0,true,false);
-    Make_Move(board,mov);
-    board->Display_Board();
-
-    Set_Move_Info(mov,c3,b1,EMPTY,EMPTY,0,0,OPEN_GAME,0,false,false);
-    Make_Move(board,mov);
-    board->Display_Board();
-
-    Set_Move_Info(mov,c6,b8,EMPTY,EMPTY,0,0,OPEN_GAME,0,true,false);
-    Make_Move(board,mov);
-    board->Display_Board();
-
-    }
-
-    delete mov;
     /*Possible_Moves *moves = new Possible_Moves;
     Generate_All_Moves(board,moves);
 

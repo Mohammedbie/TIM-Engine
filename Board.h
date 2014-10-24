@@ -33,6 +33,7 @@ public:
 
      bool Set_Full_Moves_Count(unsigned);
      void Inc_Full_Moves_Count();
+     void Dec_Full_Move_Count();
      unsigned Get_Full_Moves_Count() const;
 
      bool Set_Castling_Permissions(unsigned);
@@ -40,6 +41,7 @@ public:
 
      bool Set_Fify_Move_Count(unsigned);
      void Inc_Fifty_Move_Count();
+     void Dec_Fifty_Move_Count();
      unsigned Get_Fify_Move_Count() const;
      void Reset_Fify_Move_Count();
 

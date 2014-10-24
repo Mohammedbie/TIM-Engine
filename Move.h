@@ -107,5 +107,6 @@ inline void Generate_All_Moves(const Board *board,Possible_Moves *Moves_List)
 }
 
 void Make_Move(Board *,Move*);
+void UNDO_Move(Board *);
 
 #endif // MOVE_H_INCLUDED

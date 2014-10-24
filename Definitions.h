@@ -14,7 +14,7 @@
 #define INVAILD 1000
 #define SQUARES_PER_SIDE 8
 #define AVERAGE_GAME_MOVES 120
-#define MAX_POSSIBLE_MOVES_SIZE 300
+#define MAX_POSSIBLE_MOVES_SIZE 256
 
 
 #define MAX_POSSIBLE_PAWN_MOVES 4
@@ -307,7 +307,7 @@ struct Move
     /* The next 2 bits to store : Repetition Count. (0-2)           */
     /* The next 2 bits to store : Game Phase. (0-2)                 */
     /* The next 1 bit to store : EnPassent move,if it is. (0-1)     */
-    /* The next 1 bit to store : Side to move. (WHITE-BLACK)        */
+    /* The next 1 bit to store : Side. (WHITE-BLACK)                */
     /* The next 1 bit to store : Pawn Start, if it is. (0-1)        */
     /****************************************************************/
 
@@ -338,6 +338,7 @@ struct Move
     }
 
 };
+
 
 struct Possible_Moves
 {
